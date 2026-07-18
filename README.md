@@ -1,4 +1,5 @@
-# CVerify — AI-Powered Recruitment Intelligence Platform
+# CVerify
+### AI-Powered Recruitment Intelligence Platform
 
 <p align="center">
 
