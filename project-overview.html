@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CVerify — AI Recruitment Intelligence Platform</title>
+<style>
+  :root {
+    --bg:      #0d0f1a;
+    --surface: #13162b;
+    --card:    #1a1f38;
+    --border:  #2a2f50;
+    --accent:  #7c5af0;
+    --accent2: #4fa3f7;
+    --green:   #3ecf8e;
+    --yellow:  #f0c040;
+    --red:     #f06060;
+    --text:    #e8eaf6;
+    --muted:   #8890b0;
+    --code-bg: #0a0c18;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.6; }
+
+  /* ── Nav ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,15,26,.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .75rem 2rem;
+  }
+  .nav-brand { font-size: 1.2rem; font-weight: 700; color: var(--accent); text-decoration: none; }
+  .nav-links { display: flex; gap: 1.4rem; list-style: none; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: .88rem; transition: color .2s; }
+  .nav-links a:hover { color: var(--text); }
+
+  /* ── Layout ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+  section { padding: 5rem 0; }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 6rem 0 4rem;
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,90,240,.18) 0%, transparent 70%);
+    text-align: center;
+  }
+  .hero-badge {
+    display: inline-block; background: rgba(124,90,240,.15);
+    border: 1px solid rgba(124,90,240,.4); color: var(--accent);
+    font-size: .78rem; font-weight: 600; letter-spacing: .08em;
+    padding: .3rem .9rem; border-radius: 20px; margin-bottom: 1.5rem;
+    text-transform: uppercase;
+  }
+  h1 { font-size: clamp(2.2rem,5vw,3.6rem); font-weight: 800; line-height: 1.1; }
+  h1 span { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero-sub { color: var(--muted); font-size: 1.1rem; max-width: 660px; margin: 1.2rem auto 2.5rem; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; margin-bottom: 3rem; }
+  .tag { background: var(--card); border: 1px solid var(--border); color: var(--muted); font-size: .78rem; font-weight: 600; padding: .3rem .75rem; border-radius: 6px; }
+
+  /* ── Stats bar ── */
+  .stats-bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 2.5rem; padding: 2rem; background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .stat-item { text-align: center; }
+  .stat-num { font-size: 2rem; font-weight: 800; color: var(--accent); }
+  .stat-lbl { font-size: .8rem; color: var(--muted); margin-top: .2rem; }
+
+  /* ── Headings ── */
+  h2 { font-size: 1.7rem; font-weight: 700; margin-bottom: .5rem; }
+  h2 .accent { color: var(--accent); }
+  .section-line { width: 40px; height: 3px; background: var(--accent); border-radius: 2px; margin-bottom: 2rem; }
+  h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: .75rem; color: var(--accent2); }
+
+  /* ── Cards ── */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.2rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem; transition: border-color .2s, transform .2s; }
+  .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .card-icon { font-size: 1.8rem; margin-bottom: .8rem; }
+  .card h3 { font-size: 1rem; margin-bottom: .5rem; color: var(--text); }
+  .card p { font-size: .87rem; color: var(--muted); }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .87rem; }
+  th { background: var(--surface); color: var(--accent); font-weight: 600; padding: .7rem 1rem; text-align: left; border-bottom: 2px solid var(--border); white-space: nowrap; }
+  td { padding: .65rem 1rem; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+  code { background: var(--code-bg); color: var(--accent2); padding: .15rem .4rem; border-radius: 4px; font-size: .82rem; font-family: 'Cascadia Code', 'Fira Code', monospace; }
+
+  /* ── Code block ── */
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1.2rem 1.4rem; overflow-x: auto; font-size: .83rem;
+    font-family: 'Cascadia Code', 'Fira Code', monospace; color: #b0bce8;
+    line-height: 1.7;
+  }
+  pre .c  { color: #5a6a8a; }   /* comment */
+  pre .k  { color: var(--accent); }
+  pre .s  { color: var(--green); }
+  pre .n  { color: var(--accent2); }
+
+  /* ── Pipeline diagram ── */
+  .pipeline { display: flex; flex-direction: column; gap: .7rem; }
+  .p-stage { border-left: 3px solid var(--accent); padding-left: 1rem; }
+  .p-stage-label { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-bottom: .5rem; }
+  .p-jobs { display: flex; flex-wrap: wrap; gap: .8rem; }
+  .p-job { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: .8rem 1.1rem; min-width: 200px; }
+  .p-job-name { font-weight: 600; font-size: .9rem; margin-bottom: .4rem; }
+  .p-job ul { list-style: none; padding: 0; }
+  .p-job ul li { font-size: .8rem; color: var(--muted); padding: .1rem 0; }
+  .p-job ul li::before { content: '▸ '; color: var(--accent); }
+  .p-arrow { text-align: center; font-size: 1.2rem; color: var(--accent); }
+
+  /* ── ML flow ── */
+  .ml-flow { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  .ml-node { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem; }
+  .ml-node-title { font-weight: 700; font-size: .95rem; margin-bottom: .6rem; display: flex; align-items: center; gap: .5rem; }
+  .badge { font-size: .7rem; font-weight: 700; padding: .2rem .55rem; border-radius: 12px; }
+  .badge-purple { background: rgba(124,90,240,.2); color: var(--accent); }
+  .badge-blue   { background: rgba(79,163,247,.2); color: var(--accent2); }
+  .badge-green  { background: rgba(62,207,142,.2); color: var(--green); }
+
+  /* ── Role badges ── */
+  .role-admin     { background: rgba(240,96,96,.15);  color: var(--red);    border: 1px solid rgba(240,96,96,.3);  padding: .15rem .5rem; border-radius: 10px; font-size: .75rem; font-weight: 600; }
+  .role-recruiter { background: rgba(240,192,64,.15); color: var(--yellow); border: 1px solid rgba(240,192,64,.3); padding: .15rem .5rem; border-radius: 10px; font-size: .75rem; font-weight: 600; }
+  .role-candidate { background: rgba(62,207,142,.15); color: var(--green);  border: 1px solid rgba(62,207,142,.3); padding: .15rem .5rem; border-radius: 10px; font-size: .75rem; font-weight: 600; }
+
+  /* ── Method badges ── */
+  .m-get    { background: rgba(62,207,142,.15); color: var(--green);  font-size: .72rem; font-weight: 700; padding: .15rem .45rem; border-radius: 4px; }
+  .m-post   { background: rgba(79,163,247,.15); color: var(--accent2); font-size: .72rem; font-weight: 700; padding: .15rem .45rem; border-radius: 4px; }
+  .m-put    { background: rgba(240,192,64,.15); color: var(--yellow); font-size: .72rem; font-weight: 700; padding: .15rem .45rem; border-radius: 4px; }
+  .m-patch  { background: rgba(240,192,64,.15); color: var(--yellow); font-size: .72rem; font-weight: 700; padding: .15rem .45rem; border-radius: 4px; }
+  .m-delete { background: rgba(240,96,96,.15);  color: var(--red);   font-size: .72rem; font-weight: 700; padding: .15rem .45rem; border-radius: 4px; }
+
+  /* ── Team ── */
+  .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
+  .team-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem; text-align: center; }
+  .team-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; margin: 0 auto .8rem; }
+  .team-name { font-weight: 600; font-size: .95rem; }
+  .team-role { font-size: .78rem; color: var(--muted); margin-top: .3rem; }
+
+  /* ── Footer ── */
+  footer { background: var(--surface); border-top: 1px solid var(--border); padding: 2rem; text-align: center; color: var(--muted); font-size: .85rem; }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+
+  @media (max-width: 600px) {
+    nav { padding: .75rem 1rem; }
+    .nav-links { display: none; }
+    section { padding: 3rem 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ─────────────────────────────────────── -->
+<nav>
+  <a class="nav-brand" href="#">⬡ CVerify</a>
+  <ul class="nav-links">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#ml">ML Pipeline</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#api">API</a></li>
+    <li><a href="#cicd">CI/CD</a></li>
+    <li><a href="#quickstart">Quick Start</a></li>
+    <li><a href="#team">Team</a></li>
+  </ul>
+</nav>
+
+<!-- ── Hero ──────────────────────────────────────────── -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">ESPRIT School of Engineering · 2024/2025</div>
+    <h1>C<span>Verify</span></h1>
+    <p class="hero-sub">AI-Powered Recruitment Intelligence Platform — 3 ML notebooks, 6 production models, full-stack app with CI/CD pipeline and automated deployment.</p>
+    <div class="tag-row">
+      <span class="tag">Angular 17</span>
+      <span class="tag">FastAPI</span>
+      <span class="tag">PostgreSQL</span>
+      <span class="tag">Docker</span>
+      <span class="tag">Traefik</span>
+      <span class="tag">GitLab CI/CD</span>
+      <span class="tag">Kaggle</span>
+      <span class="tag">n8n</span>
+      <span class="tag">XGBoost</span>
+      <span class="tag">TF-IDF</span>
+      <span class="tag">JWT Auth</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── Stats ─────────────────────────────────────────── -->
+<div class="stats-bar">
+  <div class="stat-item"><div class="stat-num">6</div><div class="stat-lbl">ML Models</div></div>
+  <div class="stat-item"><div class="stat-num">3</div><div class="stat-lbl">Kaggle Notebooks</div></div>
+  <div class="stat-item"><div class="stat-num">20,414</div><div class="stat-lbl">Job Postings</div></div>
+  <div class="stat-item"><div class="stat-num">1,000</div><div class="stat-lbl">CV Training Samples</div></div>
+  <div class="stat-item"><div class="stat-num">8</div><div class="stat-lbl">Frontend Pages</div></div>
+  <div class="stat-item"><div class="stat-num">100%</div><div class="stat-lbl">Hire Classifier Acc.</div></div>
+</div>
+
+<!-- ── Overview ──────────────────────────────────────── -->
+<section id="overview">
+  <div class="container">
+    <h2><span class="accent">#</span> Overview</h2>
+    <div class="section-line"></div>
+    <div class="cards">
+      <div class="card"><div class="card-icon">🧠</div><h3>CV Analysis</h3><p>Upload a PDF — OCR + NLP classify the job role, XGBoost predicts hire probability and expected salary, KMeans assigns a candidate cluster.</p></div>
+      <div class="card"><div class="card-icon">🎯</div><h3>Job Recommendation</h3><p>TF-IDF hybrid model (cosine + Jaccard skills + salary) matches your CV against 20,414 real job postings and returns the top-5 most relevant.</p></div>
+      <div class="card"><div class="card-icon">🏢</div><h3>Recruiter Portal</h3><p>Recruiters post jobs, receive applications, and view AI-ranked candidate profiles with hire probability scores.</p></div>
+      <div class="card"><div class="card-icon">🤖</div><h3>AI Chatbot</h3><p>n8n-powered chatbot widget on every page. Answers career questions, guides users through CV submission, and provides personalized advice.</p></div>
+      <div class="card"><div class="card-icon">🕷️</div><h3>Job Scraper</h3><p>Admin-triggered scraper pulls live listings from RemoteOK, Arbeitnow and Keejob. Results auto-import into the DB with source tracking.</p></div>
+      <div class="card"><div class="card-icon">🔄</div><h3>Full CI/CD</h3><p>GitLab pipeline downloads Kaggle model artifacts, bakes them into Docker images, pushes to Docker Hub, and auto-deploys to the Kali VM.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── ML Pipeline ────────────────────────────────────── -->
+<section id="ml" style="background: var(--surface);">
+  <div class="container">
+    <h2><span class="accent">#</span> ML Pipeline</h2>
+    <div class="section-line"></div>
+
+    <div class="ml-flow" style="margin-bottom:2.5rem">
+      <div class="ml-node">
+        <div class="ml-node-title">📄 PDF Upload <span class="badge badge-blue">pdfplumber + Tesseract OCR</span></div>
+        <p style="font-size:.85rem;color:var(--muted)">Multi-page PDFs processed via pdfplumber with Tesseract OCR fallback (eng/fra/ara). Raw text extracted and fed to 3 parallel inference paths.</p>
+      </div>
+      <div class="ml-node">
+        <div class="ml-node-title">🏷️ Notebook 2 — NLP Job Role Classifier <span class="badge badge-purple">attiaimeed/nlp-model-comparison</span></div>
+        <p style="font-size:.85rem;color:var(--muted)">TF-IDF (15k tokens, bigrams) + Random Forest (300 trees). 24 job categories. Tested against Logistic Regression, Linear SVC, Multinomial NB. <strong style="color:var(--green)">F1-weighted: 75.5%</strong>. Exported as <code>job_role_classifier.pkl</code>.</p>
+      </div>
+      <div class="ml-node">
+        <div class="ml-node-title">📊 Notebook 1 — Candidate Evaluation <span class="badge badge-purple">attiaimeed/resume-ml-pj</span></div>
+        <p style="font-size:.85rem;color:var(--muted)">Random Forest Classifier → hire probability (<strong style="color:var(--green)">Acc: 100%</strong>). XGBoost Regressor → salary prediction (<strong style="color:var(--green)">MAE: $21,106</strong>). KMeans k=2 → candidate cluster (Silhouette: 0.294). Exports: <code>classifier_hire.pkl</code> · <code>salary_predictor.pkl</code> · <code>kmeans_clusters.pkl</code> · <code>label_encoder.pkl</code>.</p>
+      </div>
+      <div class="ml-node">
+        <div class="ml-node-title">🎯 Notebook 3 — Job Recommender <span class="badge badge-purple">attiaimeed/job-recommender-model</span></div>
+        <p style="font-size:.85rem;color:var(--muted)">Hybrid model: TF-IDF cosine similarity (0.5) + Jaccard skill overlap (0.3) + salary normalisation (0.2). Grid-optimised weights. Hit@5 / MRR@5 evaluation. Matches CV against 20,414 postings. Exported as <code>job_recommender_v2.pkl</code>.</p>
+      </div>
+    </div>
+
+    <h3>Model Summary</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Notebook</th><th>Model</th><th>Task</th><th>Best Metric</th><th>File</th></tr></thead>
+        <tbody>
+          <tr><td>resume-ml-pj</td><td>Random Forest</td><td>Hire / Reject</td><td style="color:var(--green)">Acc 100% · F1 100%</td><td><code>classifier_hire.pkl</code></td></tr>
+          <tr><td>resume-ml-pj</td><td>XGBoost Regressor</td><td>Salary ($)</td><td style="color:var(--green)">MAE $21,106</td><td><code>salary_predictor.pkl</code></td></tr>
+          <tr><td>resume-ml-pj</td><td>KMeans k=2</td><td>Candidate Cluster</td><td>Silhouette 0.294</td><td><code>kmeans_clusters.pkl</code></td></tr>
+          <tr><td>resume-ml-pj</td><td>LabelEncoder</td><td>Target encoding</td><td>—</td><td><code>label_encoder.pkl</code></td></tr>
+          <tr><td>nlp-model-comparison</td><td>RF + TF-IDF</td><td>24-category NLP</td><td style="color:var(--green)">F1-w 75.5%</td><td><code>job_role_classifier.pkl</code></td></tr>
+          <tr><td>job-recommender-model</td><td>TF-IDF Hybrid</td><td>Job Matching</td><td style="color:var(--green)">Hit@5 grid-opt.</td><td><code>job_recommender_v2.pkl</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── Architecture ───────────────────────────────────── -->
+<section id="architecture">
+  <div class="container">
+    <h2><span class="accent">#</span> Architecture</h2>
+    <div class="section-line"></div>
+
+    <h3 style="margin-bottom:1rem">Services</h3>
+    <div class="table-wrap" style="margin-bottom:2.5rem">
+      <table>
+        <thead><tr><th>Service</th><th>Image</th><th>Int. Port</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td><code>db</code></td><td>postgres:16-alpine</td><td>5432</td><td>PostgreSQL — persistent volume <code>pgdata</code></td></tr>
+          <tr><td><code>backend</code></td><td>attiaimeed/cverify-backend</td><td>8000</td><td>FastAPI + ML inference. Healthcheck: <code>GET /health</code></td></tr>
+          <tr><td><code>frontend</code></td><td>attiaimeed/cverify-frontend</td><td>80</td><td>Angular 17 SPA + Nginx. Proxies <code>/api/*</code> → backend, <code>/api/webhook/*</code> → n8n</td></tr>
+          <tr><td><code>n8n</code></td><td>n8nio/n8n:latest</td><td>5678</td><td>AI chatbot workflows. Persistent volume <code>n8n_data</code></td></tr>
+          <tr><td><code>traefik</code> <em>(prod)</em></td><td>traefik:v3.0</td><td>80 / 8090</td><td>Reverse proxy. Routes all HTTP to frontend. Dashboard on :8090</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-bottom:1rem">Startup Order</h3>
+    <pre>db (pg_isready) ──► backend (GET /health, 30s start) ──► frontend + n8n</pre>
+
+    <h3 style="margin-top:2rem;margin-bottom:1rem">Compose Files</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>File</th><th>Purpose</th><th>Command</th></tr></thead>
+        <tbody>
+          <tr><td><code>docker-compose.yml</code></td><td>Base — shared config, healthchecks, volumes, env vars</td><td>Base for all envs</td></tr>
+          <tr><td><code>docker-compose.dev.yml</code></td><td>Dev — direct port exposure, local models mount, weak JWT</td><td><code>-f docker-compose.yml -f docker-compose.dev.yml up --build</code></td></tr>
+          <tr><td><code>docker-compose.prod.yml</code></td><td>Prod — Traefik, Docker Hub images, no build directives</td><td><code>-f docker-compose.yml -f docker-compose.prod.yml up -d</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:2rem;margin-bottom:1rem">Frontend Pages</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Route</th><th>Page</th><th>Access</th></tr></thead>
+        <tbody>
+          <tr><td><code>/</code></td><td>Home — hero, stats, features, why CVerify</td><td>Public</td></tr>
+          <tr><td><code>/analyse</code></td><td>CV Form — upload PDF, view ML predictions</td><td>Candidate</td></tr>
+          <tr><td><code>/offres</code></td><td>Jobs — search, filter, apply, tag-based skills</td><td>Public</td></tr>
+          <tr><td><code>/dashboard</code></td><td>Dashboard — prediction history</td><td>Auth</td></tr>
+          <tr><td><code>/candidat</code></td><td>Candidate Portal — profile, applications, recommendations</td><td>Candidate</td></tr>
+          <tr><td><code>/recruteur</code></td><td>Recruiter — post jobs, manage applications</td><td>Recruiter</td></tr>
+          <tr><td><code>/admin</code></td><td>Admin — KPIs, scraper, user management, logs</td><td>Admin</td></tr>
+          <tr><td><code>/showcase</code></td><td>ML Showcase — models, datasets, architecture</td><td>Public</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── API ────────────────────────────────────────────── -->
+<section id="api" style="background: var(--surface);">
+  <div class="container">
+    <h2><span class="accent">#</span> API Endpoints</h2>
+    <div class="section-line"></div>
+
+    <h3>Auth</h3>
+    <div class="table-wrap" style="margin-bottom:2rem">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="m-post">POST</span></td><td><code>/auth/register</code></td><td>Register (candidate / recruiter / admin)</td></tr>
+          <tr><td><span class="m-post">POST</span></td><td><code>/auth/login</code></td><td>Login → JWT Bearer token (24h)</td></tr>
+          <tr><td><span class="m-get">GET</span></td><td><code>/auth/me</code></td><td>Current user profile</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>CV Analysis & Recommendations</h3>
+    <div class="table-wrap" style="margin-bottom:2rem">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="m-post">POST</span></td><td><code>/cvs/upload-pdf/full</code></td><td>Upload PDF → hire probability, salary, cluster, NLP role</td></tr>
+          <tr><td><span class="m-post">POST</span></td><td><code>/jobs/recommend</code></td><td>Upload PDF → top-5 matching jobs (v2 hybrid model)</td></tr>
+          <tr><td><span class="m-get">GET</span></td><td><code>/cvs</code></td><td>List candidate CV submissions (paginated)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Jobs</h3>
+    <div class="table-wrap" style="margin-bottom:2rem">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="m-get">GET</span></td><td><code>/jobs</code></td><td>List jobs — search, location, remote, skills, source, pagination</td></tr>
+          <tr><td><span class="m-get">GET</span></td><td><code>/jobs/{id}</code></td><td>Job detail</td></tr>
+          <tr><td><span class="m-get">GET</span></td><td><code>/jobs/stats/summary</code></td><td>Aggregated stats (total, remote, with salary)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Recruiter & Applications</h3>
+    <div class="table-wrap" style="margin-bottom:2rem">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="m-post">POST</span></td><td><code>/recruiter/posts</code></td><td>Create job post</td></tr>
+          <tr><td><span class="m-get">GET</span></td><td><code>/recruiter/posts</code></td><td>My job posts</td></tr>
+          <tr><td><span class="m-get">GET</span></td><td><code>/recruiter/posts/{id}/applications</code></td><td>Applications for a specific post</td></tr>
+          <tr><td><span class="m-post">POST</span></td><td><code>/applications</code></td><td>Apply to a recruiter post</td></tr>
+          <tr><td><span class="m-get">GET</span></td><td><code>/applications</code></td><td>My applications</td></tr>
+          <tr><td><span class="m-put">PUT</span></td><td><code>/applications/{id}/status</code></td><td>Update application status</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Admin</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="m-get">GET</span></td><td><code>/admin/stats</code></td><td>Dashboard KPIs — CVs, hired count, avg probability, salary</td></tr>
+          <tr><td><span class="m-post">POST</span></td><td><code>/admin/scrape</code></td><td>Trigger live job scraper (RemoteOK, Arbeitnow, Keejob)</td></tr>
+          <tr><td><span class="m-get">GET</span></td><td><code>/admin/scrape-logs</code></td><td>Scraper run history</td></tr>
+          <tr><td><span class="m-post">POST</span></td><td><code>/admin/import-jobs-csv</code></td><td>Import <code>data_jobs.csv</code> (20k dataset)</td></tr>
+          <tr><td><span class="m-post">POST</span></td><td><code>/admin/import-scraper-output</code></td><td>Import <code>jobs_output_final.csv</code></td></tr>
+          <tr><td><span class="m-get">GET</span></td><td><code>/admin/users</code></td><td>List all users</td></tr>
+          <tr><td><span class="m-patch">PATCH</span></td><td><code>/admin/users/{id}/role</code></td><td>Update user role</td></tr>
+          <tr><td><span class="m-delete">DELETE</span></td><td><code>/admin/users/{id}</code></td><td>Deactivate user</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── CI/CD ───────────────────────────────────────────── -->
+<section id="cicd">
+  <div class="container">
+    <h2><span class="accent">#</span> CI/CD Pipeline</h2>
+    <div class="section-line"></div>
+
+    <div class="pipeline" style="margin-bottom:2.5rem">
+      <div class="p-stage">
+        <div class="p-stage-label">Stage 1 — Models</div>
+        <div class="p-jobs">
+          <div class="p-job">
+            <div class="p-job-name">📥 download-models</div>
+            <ul>
+              <li>Install Kaggle CLI</li>
+              <li>Auth via <code>KAGGLE_TOKEN</code> env var</li>
+              <li>Download <code>attiaimeed/resume-ml-pj</code></li>
+              <li>Download <code>attiaimeed/job-recommender-model</code></li>
+              <li>Download <code>attiaimeed/nlp-model-comparison</code></li>
+              <li>Verify all 3 required .pkl files exist</li>
+              <li>Pass <code>backend/models/</code> as artifact</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-arrow">▼</div>
+
+      <div class="p-stage">
+        <div class="p-stage-label">Stage 2 — Build (parallel)</div>
+        <div class="p-jobs">
+          <div class="p-job">
+            <div class="p-job-name">🐳 build-backend</div>
+            <ul>
+              <li>Receives models artifact</li>
+              <li><code>docker build ./backend</code></li>
+              <li>Models baked into image</li>
+              <li>Push <code>:SHA</code> + <code>:latest</code></li>
+            </ul>
+          </div>
+          <div class="p-job">
+            <div class="p-job-name">🐳 build-frontend</div>
+            <ul>
+              <li>No model dependency</li>
+              <li>Runs in parallel immediately</li>
+              <li><code>docker build ./frontend-angular</code></li>
+              <li>Push <code>:SHA</code> + <code>:latest</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-arrow">▼</div>
+
+      <div class="p-stage">
+        <div class="p-stage-label">Stage 3 — Deploy (Kali VM runner, tag: deploy)</div>
+        <div class="p-jobs">
+          <div class="p-job">
+            <div class="p-job-name">🚀 deploy</div>
+            <ul>
+              <li>Shell executor on Kali VM</li>
+              <li>Runs <code>$CI_PROJECT_DIR/deploy.sh</code></li>
+              <li>docker compose down (keeps volumes)</li>
+              <li>docker compose pull (new images)</li>
+              <li>docker compose up -d</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Required GitLab CI/CD Variables</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Variable</th><th>Value</th><th>Used by</th></tr></thead>
+        <tbody>
+          <tr><td><code>KAGGLE_TOKEN</code></td><td>Kaggle API key (e.g. <code>KGAT_xxxxxxxx</code>)</td><td>download-models</td></tr>
+          <tr><td><code>DOCKERHUB_USERNAME</code></td><td>Docker Hub username</td><td>build-backend, build-frontend</td></tr>
+          <tr><td><code>DOCKERHUB_TOKEN</code></td><td>Docker Hub access token (PAT)</td><td>build-backend, build-frontend</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── Quick Start ────────────────────────────────────── -->
+<section id="quickstart" style="background: var(--surface);">
+  <div class="container">
+    <h2><span class="accent">#</span> Quick Start</h2>
+    <div class="section-line"></div>
+
+    <h3>Development</h3>
+    <pre>git clone &lt;repo&gt;
+cd project-cv-ml-fr-main
+
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build</pre>
+    <div class="table-wrap" style="margin:1rem 0 2rem">
+      <table>
+        <thead><tr><th>URL</th><th>Service</th></tr></thead>
+        <tbody>
+          <tr><td><code>http://localhost:8080</code></td><td>Angular SPA</td></tr>
+          <tr><td><code>http://localhost:8000/docs</code></td><td>FastAPI Swagger UI</td></tr>
+          <tr><td><code>http://localhost:5678</code></td><td>n8n admin (admin / cverify_n8n)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Production (on VM)</h3>
+    <pre>chmod +x deploy.sh
+./deploy.sh</pre>
+    <div class="table-wrap" style="margin:1rem 0 2rem">
+      <table>
+        <thead><tr><th>URL</th><th>Service</th></tr></thead>
+        <tbody>
+          <tr><td><code>http://&lt;host&gt;</code></td><td>Angular SPA (via Traefik)</td></tr>
+          <tr><td><code>http://&lt;host&gt;:8090</code></td><td>Traefik dashboard</td></tr>
+          <tr><td><code>http://&lt;host&gt;:5678</code></td><td>n8n admin UI</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Seeded Accounts</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Email</th><th>Role</th><th>Password</th></tr></thead>
+        <tbody>
+          <tr><td><code>admin@cverify.com</code></td><td><span class="role-admin">admin</span></td><td><code>admin123</code></td></tr>
+          <tr><td><code>imed.attia@esprit.tn</code></td><td><span class="role-admin">admin</span></td><td><code>Esprit2026!</code></td></tr>
+          <tr><td><code>khalil.chiha@esprit.tn</code></td><td><span class="role-recruiter">recruiter</span></td><td><code>Esprit2026!</code></td></tr>
+          <tr><td><code>zaineb.khlifi@esprit.tn</code></td><td><span class="role-candidate">candidate</span></td><td><code>Esprit2026!</code></td></tr>
+          <tr><td><code>yessine.mnejja@esprit.tn</code></td><td><span class="role-candidate">candidate</span></td><td><code>Esprit2026!</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── Team ───────────────────────────────────────────── -->
+<section id="team">
+  <div class="container">
+    <h2><span class="accent">#</span> Team</h2>
+    <div class="section-line"></div>
+    <div class="team-grid">
+      <div class="team-card"><div class="team-avatar">IA</div><div class="team-name">Imed Attia</div><div class="team-role">ML Engineer · Full-Stack Dev</div></div>
+      <div class="team-card"><div class="team-avatar">KC</div><div class="team-name">Khalil Chiha</div><div class="team-role">Data Engineer · Backend</div></div>
+      <div class="team-card"><div class="team-avatar">FL</div><div class="team-name">Feres Loukil</div><div class="team-role">Data Analyst</div></div>
+      <div class="team-card"><div class="team-avatar">ZK</div><div class="team-name">Zaineb Khlifi</div><div class="team-role">NLP Specialist</div></div>
+      <div class="team-card"><div class="team-avatar">YM</div><div class="team-name">Yessine Mnejja</div><div class="team-role">Frontend · DevOps</div></div>
+    </div>
+    <p style="margin-top:2rem;color:var(--muted);font-size:.9rem;text-align:center">ESPRIT School of Engineering — Academic Year 2024/2025</p>
+  </div>
+</section>
+
+<!-- ── Footer ─────────────────────────────────────────── -->
+<footer>
+  <strong style="color:var(--accent)">CVerify</strong> — AI-Powered Recruitment Intelligence Platform &nbsp;·&nbsp;
+  <a href="https://hub.docker.com/u/attiaimeed" style="color:var(--accent2);text-decoration:none">Docker Hub</a> &nbsp;·&nbsp;
+  ESPRIT 2024/2025
+</footer>
+
+</body>
+</html>

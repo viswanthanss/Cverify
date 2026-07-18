@@ -1,0 +1,38 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CVerify — Development Overrides
+#
+# Extends docker-compose.yml with:
+#   • Direct port exposure for local browser/tool access
+#   • Local models mount (use locally-trained .pkl files, not baked-in image)
+#   • DB port exposed for DBeaver / psql / TablePlus
+#   • Weak JWT secret safe for local testing
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  db:
+    ports:
+      - "5432:5432"    # Access DB from host with any SQL client
+
+  backend:
+    ports:
+      - "8000:8000"    # Swagger UI: http://localhost:8000/docs
+    volumes:
+      - ./backend/models:/app/models    # Mount local model files
+    environment:
+      JWT_SECRET: "dev-secret-not-for-production"
+
+  frontend:
+    ports:
+      - "8080:80"      # App UI: http://localhost:8080
+    environment:
+      N8N_URL: http://n8n:5678
+
+  n8n:
+    ports:
+      - "5679:5678"    # n8n editor: http://localhost:5679
+    environment:
+      WEBHOOK_URL: http://localhost:5679/

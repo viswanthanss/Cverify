@@ -1,0 +1,69 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CVerify — Production Overrides
+#
+# Extends docker-compose.yml with:
+#   • Traefik reverse proxy (auto-routes by Docker labels)
+#   • Docker Hub image tags (models baked in by CI)
+#   • No direct port exposure for backend/frontend (all traffic via Traefik:80)
+#   • n8n on dedicated port 5678 (password-protected admin)
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+#
+# Traffic flow:
+#   Internet → Traefik:80 → frontend nginx:80
+#                              ├─ /api/*       → backend:8000 (internal)
+#                              ├─ /api/webhook → n8n:5678    (internal)
+#                              └─ /*           → Angular SPA
+#
+# Traefik dashboard: http://host:8090  (restrict with firewall in production)
+# n8n admin UI:      http://host:5678  (basic-auth protected)
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Traefik Reverse Proxy ────────────────────────────────────
+  traefik:
+    image: traefik:v3.0
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"    # Dashboard on :8080 → exposed as 8090 below
+    ports:
+      - "80:80"       # Public HTTP entry point
+      - "8090:8080"   # Traefik dashboard (block port 8090 on firewall in prod)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ── Backend ──────────────────────────────────────────────────
+  # No ports exposed — only reachable via frontend nginx proxy internally.
+  backend:
+    image: attiaimeed/cverify-backend:latest
+    # build: intentionally omitted — CI bakes models into the image
+
+  # ── Frontend ─────────────────────────────────────────────────
+  # Traefik routes all HTTP traffic here. Nginx handles /api/* internally.
+  frontend:
+    image: attiaimeed/cverify-frontend:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.routers.frontend.priority=1"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+
+  # ── n8n ──────────────────────────────────────────────────────
+  n8n:
+    ports:
+      - "5678:5678"   # Admin UI (basic-auth on). Firewall this if not needed.
+    environment:
+      WEBHOOK_URL: http://localhost:5678/

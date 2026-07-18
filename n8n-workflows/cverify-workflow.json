@@ -1,0 +1,135 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chatbot",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0bda9612-9809-4e2a-a901-f0dd7257565e",
+      "name": "Webhook",
+      "webhookId": "18d3bfe8-1ff8-46f0-9cbe-88f2d9a9eae1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.chatInput }}",
+        "options": {
+          "systemMessage": "You are CVerify AI, the intelligent assistant of the CVerify recruitment platform.\n\nYou help users with:\n* 🔍 Browsing and filtering job offers\n* 📄 CV analysis (hire probability, salary prediction, candidate cluster)\n* 💰 Salary predictions and market benchmarks\n* 📊 Platform statistics and AI model explanations\n* 📬 Application tracking and status updates\n* 🏢 Recruiter guidance (posting offers, managing candidates)\n\nYou have access to tools:\n* **Get Jobs** — fetch current job listings with filters\n* **Jobs Stats** — job market stats (total, remote, with salary...)\n* **Platform Stats** — global platform stats (CVs analysed, hired, avg salary, clusters)\n\nRules:\n* Always answer in French unless the user writes in another language.\n* Be concise, professional and friendly.\n* Use markdown formatting (bold, lists, links).\n* When the user asks about jobs or offers → call the Get Jobs tool.\n* When the user asks about salaries, statistics, or market data → call the Jobs Stats or Platform Stats tools.\n* Always recommend uploading a CV for a personalized AI analysis.\n* Never invent data — use tool results or say you don't have the information.\n\nUseful platform links (Angular SPA):\n* 🏠 Accueil : http://localhost:8080/\n* 💼 Offres d'emploi : http://localhost:8080/offres\n* 📄 Analyser mon CV : http://localhost:8080/analyse\n* 👤 Espace Candidat : http://localhost:8080/candidat\n* 🏢 Portail Recruteur : http://localhost:8080/recruteur\n* 📊 Dashboard statistiques : http://localhost:8080/dashboard\n\nWhen ending a response, suggest a relevant next action with a link when appropriate."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "4f5b67a0-b696-4bba-9bc3-2d2e666d2b48",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        560,
+        0
+      ],
+      "id": "f4de2160-e62a-46f3-af51-dc63b8b4689f",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        80,
+        208
+      ],
+      "id": "6b1de92f-99d6-4a1d-b907-2905092db0f5",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "lBrZ4vp5yIOA0OF2",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        208
+      ],
+      "id": "59df4021-bc63-40af-a053-33f6b966da07",
+      "name": "Simple Memory"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b3b54ed274d96e91a3e0b8ef15499c322a41bc11387e3903e7b023fc448eb01c"
+  }
+}

@@ -1,0 +1,100 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CVerify — Base Compose (shared between dev and prod)
+#
+# Usage:
+#   Development : docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#   Production  : docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL Database ──────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cverify
+      POSTGRES_PASSWORD: cverify_secret
+      POSTGRES_DB: cverify
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cverify"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  # ── FastAPI Backend ──────────────────────────────────────────
+  backend:
+    image: attiaimeed/cverify-backend:latest
+    build: ./backend
+    restart: unless-stopped
+    volumes:
+      - ./backend/data:/app/data
+      - ./scraper:/app/scraper
+    environment:
+      PYTHONUNBUFFERED: "1"
+      DATABASE_URL: postgresql://cverify:cverify_secret@db:5432/cverify
+      N8N_WEBHOOK_URL: http://n8n:5678/webhook/chatbot
+      JWT_SECRET: ${JWT_SECRET:-cverify-change-me-in-production}
+      JWT_EXPIRE_MINUTES: "1440"
+      # Azure SQL "Jobs_DW" data warehouse (values come from .env — never committed)
+      AZURE_SQL_SERVER: ${AZURE_SQL_SERVER:-}
+      AZURE_SQL_DB: ${AZURE_SQL_DB:-}
+      AZURE_SQL_USER: ${AZURE_SQL_USER:-}
+      AZURE_SQL_PASSWORD: ${AZURE_SQL_PASSWORD:-}
+      AZURE_SQL_PORT: ${AZURE_SQL_PORT:-1433}
+      AZURE_SQL_IMPORT_LIMIT: ${AZURE_SQL_IMPORT_LIMIT:-5000}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Angular Frontend (nginx) ─────────────────────────────────
+  frontend:
+    image: attiaimeed/cverify-frontend:latest
+    build: ./frontend-angular
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ── n8n Workflow Automation ──────────────────────────────────
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: cverify_n8n
+      N8N_SECURE_COOKIE: "false"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5678/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  pgdata:
+  n8n_data:

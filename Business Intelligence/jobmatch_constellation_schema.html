@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobMatch AI — Constellation Schema v2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #060b16;
+    --panel: #0e1525;
+    --border: #1a2540;
+    --fact1-accent: #3b82f6;
+    --fact1-header: #0f2a5c;
+    --fact1-glow: rgba(59,130,246,0.08);
+    --fact2-accent: #10b981;
+    --fact2-header: #073b28;
+    --fact2-glow: rgba(16,185,129,0.08);
+    --dim-accent: #8b5cf6;
+    --dim-header: #1e1345;
+    --shared-accent: #f59e0b;
+    --shared-header: #3d2b08;
+    --pk: #fbbf24;
+    --fk: #60a5fa;
+    --measure: #c4b5fd;
+    --flag: #34d399;
+    --text: #e2e8f0;
+    --muted: #4b5e7a;
+    --error: #ef4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: auto;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 24px 40px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  header .sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    line-height: 1.7;
+  }
+
+  /* ── RULES PANEL ── */
+  .rules {
+    margin: 16px 40px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .rule {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .rule-icon { font-size: 14px; margin-bottom: 4px; }
+  .rule strong {
+    display: block;
+    font-size: 10px;
+    color: #fff;
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+  }
+  .rule span {
+    font-size: 9px;
+    color: var(--muted);
+    line-height: 1.6;
+    display: block;
+  }
+  .rule.error { border-left: 3px solid var(--error); }
+  .rule.ok    { border-left: 3px solid var(--fact2-accent); }
+  .rule.info  { border-left: 3px solid var(--shared-accent); }
+
+  /* ── LEGEND ── */
+  .legend-bar {
+    margin: 0 40px 12px;
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    padding: 10px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 9px; color: var(--muted);
+  }
+  .lg { width: 12px; height: 4px; border-radius: 2px; }
+
+  /* ── SCHEMA CANVAS ── */
+  .canvas {
+    position: relative;
+    min-width: 1300px;
+    min-height: 820px;
+    margin: 0 40px;
+  }
+
+  /* ── TABLE CARDS ── */
+  .tbl {
+    position: absolute;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    font-size: 11px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    z-index: 2;
+  }
+
+  .tbl-head {
+    padding: 7px 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tbl-head .chip {
+    margin-left: auto;
+    font-size: 8px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+  }
+
+  .tbl-body { background: var(--panel); }
+
+  .r {
+    display: grid;
+    grid-template-columns: 36px 1fr 28px;
+    align-items: center;
+    padding: 4px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    gap: 4px;
+  }
+  .r:last-child { border-bottom: none; }
+  .r.sep { border-top: 1px dashed rgba(255,255,255,0.07); }
+
+  .dt { color: var(--muted); font-size: 9px; }
+  .cn { font-size: 10px; }
+  .cn.m { color: var(--measure); }
+  .cn.fl { color: var(--flag); }
+  .kb {
+    font-size: 7px; font-weight: 700;
+    padding: 1px 4px; border-radius: 3px;
+    text-align: center; justify-self: end;
+  }
+  .kb.pk { background: rgba(251,191,36,0.15); color: var(--pk); }
+  .kb.fk { background: rgba(96,165,250,0.12); color: var(--fk); }
+  .new-tag { font-size: 7px; color: var(--fact2-accent); font-weight: 700; justify-self: end; }
+
+  /* Coloring per type */
+  .fact1 .tbl-head { background: var(--fact1-header); color: #93c5fd; }
+  .fact1 .tbl-head .chip { background: rgba(59,130,246,0.2); color: var(--fact1-accent); }
+  .fact1 { border-color: rgba(59,130,246,0.35); box-shadow: 0 0 40px var(--fact1-glow), 0 4px 24px rgba(0,0,0,0.5); }
+
+  .fact2 .tbl-head { background: var(--fact2-header); color: #6ee7b7; }
+  .fact2 .tbl-head .chip { background: rgba(16,185,129,0.2); color: var(--fact2-accent); }
+  .fact2 { border-color: rgba(16,185,129,0.35); box-shadow: 0 0 40px var(--fact2-glow), 0 4px 24px rgba(0,0,0,0.5); }
+
+  .dim .tbl-head { background: var(--dim-header); color: #c4b5fd; }
+  .dim .tbl-head .chip { background: rgba(139,92,246,0.2); color: var(--dim-accent); }
+  .dim { border-color: rgba(139,92,246,0.3); }
+
+  .shared .tbl-head { background: var(--shared-header); color: #fcd34d; }
+  .shared .tbl-head .chip { background: rgba(245,158,11,0.2); color: var(--shared-accent); }
+  .shared { border-color: rgba(245,158,11,0.35); box-shadow: 0 0 30px rgba(245,158,11,0.05), 0 4px 24px rgba(0,0,0,0.5); }
+
+  /* ── SVG LINES ── */
+  svg.lines {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .shared-badge {
+    position: absolute;
+    font-size: 8px;
+    color: var(--shared-accent);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    transform: translateX(-50%);
+    z-index: 3;
+  }
+
+  footer {
+    padding: 16px 40px;
+    border-top: 1px solid var(--border);
+    font-size: 9px;
+    color: var(--muted);
+    display: flex; justify-content: space-between;
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>JobMatch AI — Constellation Schema v2</h1>
+  <div class="sub">
+    Corrected BI-aligned constellation · No fact↔fact links · No redundant keys · Conforming shared dimensions only
+  </div>
+</header>
+
+<div class="rules">
+  <div class="rule error">
+    <div class="rule-icon">🚫</div>
+    <strong>Rule: Facts never reference facts</strong>
+    <span>A fact table FK must always point to a dimension PK. posting_id FK in FACT_JOB_SKILL → FACT_JOB_POSTING was wrong — removed.</span>
+  </div>
+  <div class="rule error">
+    <div class="rule-icon">🚫</div>
+    <strong>Rule: No redundant dimension FKs</strong>
+    <span>date_id in FACT_JOB_SKILL was redundant — the date belongs to the posting, not the skill assignment. Querying date goes through FACT_JOB_POSTING → DIM_DATE.</span>
+  </div>
+  <div class="rule ok">
+    <div class="rule-icon">✅</div>
+    <strong>Constellation via shared (conforming) dims</strong>
+    <span>DIM_JOB is the shared conforming dimension between both facts. Cross-fact analysis in SSAS uses drill-across on this shared key — the BI standard approach.</span>
+  </div>
+</div>
+
+<div class="legend-bar">
+  <div class="legend-item"><div class="lg" style="background:var(--fact1-accent)"></div> FACT_JOB_POSTING links</div>
+  <div class="legend-item"><div class="lg" style="background:var(--fact2-accent)"></div> FACT_JOB_SKILL links</div>
+  <div class="legend-item"><div class="lg" style="background:var(--shared-accent)"></div> Shared / conforming dimension</div>
+  <div class="legend-item"><div class="lg" style="background:var(--dim-accent)"></div> Dedicated dimension</div>
+  <div class="legend-item"><div class="lg" style="background:var(--pk)"></div> PK</div>
+  <div class="legend-item"><div class="lg" style="background:var(--fk)"></div> FK</div>
+  <div class="legend-item"><div class="lg" style="background:var(--measure)"></div> Measure</div>
+  <div class="legend-item"><div class="lg" style="background:var(--flag)"></div> Flag</div>
+</div>
+
+<div class="canvas" id="canvas">
+  <svg class="lines" id="svg"></svg>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- FACT 1: JOB_POSTING — center left           -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="tbl fact1" id="fact1" style="left:60px; top:180px; width:280px;">
+    <div class="tbl-head">FACT_JOB_POSTING <span class="chip">FACT ①</span></div>
+    <div class="tbl-body">
+      <div class="r"><span class="dt">int</span><span class="cn">posting_id</span><span class="kb pk">PK</span></div>
+      <div class="r"><span class="dt">int</span><span class="cn">job_id</span><span class="kb fk">FK</span></div>
+      <div class="r"><span class="dt">int</span><span class="cn">company_id</span><span class="kb fk">FK</span></div>
+      <div class="r"><span class="dt">int</span><span class="cn">location_id</span><span class="kb fk">FK</span></div>
+      <div class="r"><span class="dt">int</span><span class="cn">date_id</span><span class="kb fk">FK</span></div>
+      <div class="r"><span class="dt">int</span><span class="cn">via_id</span><span class="kb fk">FK</span></div>
+      <div class="r sep"><span class="dt">int</span><span class="cn m">posting_count</span></div>
+      <div class="r"><span class="dt">int</span><span class="cn fl">work_from_home_flag</span></div>
+      <div class="r"><span class="dt">int</span><span class="cn fl">no_degree_mention_flag</span></div>
+      <div class="r"><span class="dt">int</span><span class="cn fl">health_insurance_flag</span></div>
+      <div class="r"><span class="dt">float</span><span class="cn m">salary_year_avg</span></div>
+      <div class="r"><span class="dt">float</span><span class="cn m">salary_hour_avg</span></div>
+      <div class="r" style="background:rgba(167,139,250,0.06)"><span class="dt">varchar</span><span class="cn m">salary_rate</span><span class="new-tag">✦ NEW</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- FACT 2: JOB_SKILL — center right             -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="tbl fact2" id="fact2" style="left:880px; top:260px; width:260px;">
+    <div class="tbl-head">FACT_JOB_SKILL <span class="chip">FACT ② NEW</span></div>
+    <div class="tbl-body">
+      <div class="r"><span class="dt">int</span><span class="cn">job_skill_id</span><span class="kb pk">PK</span></div>
+      <div class="r"><span class="dt">int</span><span class="cn">job_id</span><span class="kb fk">FK</span></div>
+      <div class="r"><span class="dt">int</span><span class="cn">skill_id</span><span class="kb fk">FK</span></div>
+      <div class="r sep"><span class="dt">int</span><span class="cn m">skill_count</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SHARED CONFORMING DIMENSION: DIM_JOB         -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="shared-badge" style="left:575px; top:192px;">⭐ SHARED CONFORMING DIM</div>
+  <div class="tbl shared" id="dim_job" style="left:490px; top:205px; width:185px;">
+    <div class="tbl-head">DIM_JOB <span class="chip">SHARED</span></div>
+    <div class="tbl-body">
+      <div class="r"><span class="dt">int</span><span class="cn">job_id</span><span class="kb pk">PK</span></div>
+      <div class="r"><span class="dt">string</span><span class="cn">job_title_short</span></div>
+      <div class="r"><span class="dt">string</span><span class="cn">job_title</span></div>
+      <div class="r"><span class="dt">string</span><span class="cn">job_schedule_type</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- DIMS exclusive to FACT 1                     -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="tbl dim" id="dim_company" style="left:20px; top:10px; width:175px;">
+    <div class="tbl-head">DIM_COMPANY <span class="chip">DIM</span></div>
+    <div class="tbl-body">
+      <div class="r"><span class="dt">int</span><span class="cn">company_id</span><span class="kb pk">PK</span></div>
+      <div class="r"><span class="dt">string</span><span class="cn">company_name</span></div>
+    </div>
+  </div>
+
+  <div class="tbl dim" id="dim_location" style="left:220px; top:10px; width:185px;">
+    <div class="tbl-head">DIM_LOCATION <span class="chip">DIM</span></div>
+    <div class="tbl-body">
+      <div class="r"><span class="dt">int</span><span class="cn">location_id</span><span class="kb pk">PK</span></div>
+      <div class="r"><span class="dt">string</span><span class="cn">job_country</span></div>
+      <div class="r"><span class="dt">string</span><span class="cn">job_location</span></div>
+      <div class="r"><span class="dt">string</span><span class="cn">search_location</span></div>
+    </div>
+  </div>
+
+  <div class="tbl dim" id="dim_date" style="left:432px; top:10px; width:185px;">
+    <div class="tbl-head">DIM_DATE <span class="chip">DIM</span></div>
+    <div class="tbl-body">
+      <div class="r"><span class="dt">int</span><span class="cn">date_id</span><span class="kb pk">PK</span></div>
+      <div class="r"><span class="dt">date</span><span class="cn">full_date</span></div>
+      <div class="r"><span class="dt">int</span><span class="cn">year</span></div>
+      <div class="r"><span class="dt">int</span><span class="cn">month</span></div>
+      <div class="r"><span class="dt">string</span><span class="cn">month_name</span></div>
+      <div class="r"><span class="dt">int</span><span class="cn">quarter</span></div>
+      <div class="r"><span class="dt">string</span><span class="cn">day_of_week</span></div>
+    </div>
+  </div>
+
+  <div class="tbl dim" id="dim_via" style="left:30px; top:560px; width:160px;">
+    <div class="tbl-head">DIM_VIA <span class="chip">DIM</span></div>
+    <div class="tbl-body">
+      <div class="r"><span class="dt">int</span><span class="cn">via_id</span><span class="kb pk">PK</span></div>
+      <div class="r"><span class="dt">string</span><span class="cn">job_via</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- DIMS exclusive to FACT 2                     -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="tbl dim" id="dim_skill" style="left:880px; top:530px; width:185px;">
+    <div class="tbl-head">DIM_SKILL <span class="chip">DIM</span></div>
+    <div class="tbl-body">
+      <div class="r"><span class="dt">int</span><span class="cn">skill_id</span><span class="kb pk">PK</span></div>
+      <div class="r"><span class="dt">int</span><span class="cn">categorie_id</span><span class="kb fk">FK</span></div>
+      <div class="r"><span class="dt">string</span><span class="cn">skill_name</span></div>
+    </div>
+  </div>
+
+  <div class="tbl dim" id="dim_categorie" style="left:1100px; top:530px; width:185px;">
+    <div class="tbl-head">DIM_CATEGORIE <span class="chip">OUTRIGGER</span></div>
+    <div class="tbl-body">
+      <div class="r"><span class="dt">int</span><span class="cn">categorie_id</span><span class="kb pk">PK</span></div>
+      <div class="r"><span class="dt">string</span><span class="cn">nom_categorie</span></div>
+    </div>
+  </div>
+
+</div><!-- canvas -->
+
+<footer>
+  <span>JobMatch AI — Constellation (Galaxy) Schema v2 · Kimball-aligned</span>
+  <span>SSMS / SSIS / SSAS · drill-across via conforming DIM_JOB · No bridge tables · No fact↔fact FK</span>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const canvas = document.getElementById('canvas');
+  const svg = document.getElementById('svg');
+  const cr = canvas.getBoundingClientRect();
+
+  function box(id) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return {
+      t: r.top  - cr.top,
+      b: r.bottom - cr.top,
+      l: r.left - cr.left,
+      r: r.right - cr.left,
+      cx: (r.left + r.right) / 2 - cr.left,
+      cy: (r.top + r.bottom) / 2 - cr.top,
+    };
+  }
+
+  function makePath(x1, y1, x2, y2, color, opacity, dash) {
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const dy = Math.abs(y2 - y1);
+    const dx = Math.abs(x2 - x1);
+
+    let d;
+    if (dy > dx * 0.6) {
+      // vertical-ish: vertical bezier
+      const my = (y1 + y2) / 2;
+      d = `M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`;
+    } else {
+      // horizontal-ish: horizontal bezier
+      const mx = (x1 + x2) / 2;
+      d = `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`;
+    }
+
+    p.setAttribute('d', d);
+    p.setAttribute('fill', 'none');
+    p.setAttribute('stroke', color);
+    p.setAttribute('stroke-width', dash ? '1' : '1.5');
+    p.setAttribute('stroke-opacity', opacity || '0.6');
+    if (dash) p.setAttribute('stroke-dasharray', '5 3');
+    svg.appendChild(p);
+  }
+
+  function drawDot(x, y, color) {
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('cx', x);
+    c.setAttribute('cy', y);
+    c.setAttribute('r', '3');
+    c.setAttribute('fill', color);
+    c.setAttribute('opacity', '0.9');
+    svg.appendChild(c);
+  }
+
+  function label(x, y, text, color) {
+    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    t.setAttribute('x', x);
+    t.setAttribute('y', y);
+    t.setAttribute('fill', color || '#4b5e7a');
+    t.setAttribute('font-size', '9');
+    t.setAttribute('font-family', 'JetBrains Mono, monospace');
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('opacity', '0.8');
+    t.textContent = text;
+    svg.appendChild(t);
+  }
+
+  const B = '#3b82f6';  // fact1 blue
+  const G = '#10b981';  // fact2 green
+  const A = '#f59e0b';  // shared amber
+  const P = '#8b5cf6';  // dim purple
+
+  const f1 = box('fact1');
+  const f2 = box('fact2');
+  const dj = box('dim_job');
+  const dc = box('dim_company');
+  const dl = box('dim_location');
+  const dd = box('dim_date');
+  const dv = box('dim_via');
+  const ds = box('dim_skill');
+  const dcat = box('dim_categorie');
+
+  if (!f1 || !f2 || !dj) return;
+
+  // ── FACT1 → its dimensions ──
+
+  // FACT1 → DIM_COMPANY (top)
+  makePath(f1.cx - 40, f1.t, dc.cx, dc.b, B);
+  drawDot(dc.cx, dc.b, B);
+  label((f1.cx - 40 + dc.cx) / 2, (f1.t + dc.b) / 2 - 6, 'company_id', B);
+
+  // FACT1 → DIM_LOCATION (top)
+  makePath(f1.cx + 20, f1.t, dl.cx, dl.b, B);
+  drawDot(dl.cx, dl.b, B);
+  label((f1.cx + 20 + dl.cx) / 2, (f1.t + dl.b) / 2 - 6, 'location_id', B);
+
+  // FACT1 → DIM_DATE (top)
+  makePath(f1.r - 20, f1.t, dd.cx, dd.b, B);
+  drawDot(dd.cx, dd.b, B);
+  label((f1.r - 20 + dd.cx) / 2 + 20, (f1.t + dd.b) / 2 - 6, 'date_id', B);
+
+  // FACT1 → DIM_VIA (bottom)
+  makePath(f1.cx - 20, f1.b, dv.cx, dv.t, B);
+  drawDot(dv.cx, dv.t, B);
+  label((f1.cx - 20 + dv.cx) / 2, (f1.b + dv.t) / 2 - 6, 'via_id', B);
+
+  // FACT1 → DIM_JOB (shared — amber line from fact1 side)
+  makePath(f1.r, f1.cy - 15, dj.l, dj.cy, A, '0.8');
+  drawDot(dj.l, dj.cy, A);
+  label((f1.r + dj.l) / 2, f1.cy - 28, 'job_id', A);
+
+  // FACT2 → DIM_JOB (shared — amber line from fact2 side)
+  makePath(f2.l, f2.cy - 10, dj.r, dj.cy, A, '0.8');
+  drawDot(dj.r, dj.cy, A);
+  label((f2.l + dj.r) / 2, f2.cy - 24, 'job_id', A);
+
+  // FACT2 → DIM_SKILL (bottom)
+  makePath(f2.cx - 15, f2.b, ds.cx, ds.t, G);
+  drawDot(ds.cx, ds.t, G);
+  label(f2.cx - 15, (f2.b + ds.t) / 2 - 6, 'skill_id', G);
+
+  // DIM_SKILL → DIM_CATEGORIE (outrigger)
+  if (ds && dcat) {
+    makePath(ds.r, ds.cy, dcat.l, dcat.cy, P, '0.5');
+    drawDot(dcat.l, dcat.cy, P);
+    label((ds.r + dcat.l) / 2, ds.cy - 10, 'categorie_id', P);
+  }
+
+  // ── NO line between FACT1 and FACT2 ── (this is intentional!)
+
+});
+</script>
+</body>
+</html>

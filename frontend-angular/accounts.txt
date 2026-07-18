@@ -1,0 +1,8 @@
+Seeded accounts (password: Esprit2026! for all):
+
+     — admin
+khalil.chiha@esprit.tn — recruiter (company: Esprit)
+zaineb.khlifi@esprit.tn — candidate
+yessine.mnejja@esprit.tn — candidate
+admin@cverify.com — admin (password: admin123, kept from before)
+Recruiter posts: 6 French job posts seeded for khalil.chiha@esprit.tn (ML engineer, full-stack dev, data analyst, DevOps, project manager, PFE intern)
