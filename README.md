@@ -1,7 +1,19 @@
 # CVerify — AI-Powered Recruitment Intelligence Platform
 
-> **3 ML Notebooks → 6 Exported Models → Full-Stack Production App**
+<p align="center">
+
+## 🎥 Project Demo
+
+**▶️ Demo Video:**  
+https://drive.google.com/file/d/1sxc9VsA09AkZILjRhj7sXTzObrnAOVTG/view?usp=sharing
+
+</p>
+
+---
+
+> **3 ML Notebooks → 6 Exported Models → Full-Stack Production App**  
 > Angular 17 · FastAPI · PostgreSQL · Docker · n8n · JWT Auth · Job Scraper · NLP
+
 
 [![Pipeline](https://gitlab.com/AttiaImeed/cverify/badges/main/pipeline.svg)](https://gitlab.com/AttiaImeed/cverify/-/pipelines)
 [![Backend](https://img.shields.io/docker/pulls/attiaimeed/cverify-backend?label=backend%20pulls&logo=docker)](https://hub.docker.com/r/attiaimeed/cverify-backend)
