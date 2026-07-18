@@ -405,12 +405,4 @@ cverify/
 
 ---
 
-## Team
 
-- **Imed Attia** — ML Engineer & Full-Stack Developer
-- **Khalil Chiha** — Data Engineer & Backend
-- **Feres Loukil** — Data Analyst
-- **Zaineb Khlifi** — NLP
-- **Yessine Mnejja** — Frontend & DevOps
-
-**ESPRIT School of Engineering** — 2024/2025
